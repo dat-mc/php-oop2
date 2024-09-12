@@ -7,36 +7,56 @@ use Ember\App\Interfaces\IModel;
 
 abstract class Model implements IModel
 {
-    protected $db;
+    protected $props = [];
 
-
-    public function __construct()
+    public function __set($name, $value)
     {
-        $this->db = Db::getInstance();
+        $this->props[$name] = true;
+        $this->$name = $value;
     }
 
-    public function find(int $id)
+    public function __get($name)
     {
-        $tableName = $this->getTableName();
+        return $this->$name;
+    }
+
+    public static function find(int $id)
+    {
+        $tableName = static::getTableName();
         $sql = "SELECT * FROM {$tableName} WHERE id = :id";
-        return $this->db->queryOne($sql, ['id' => $id]);
+        return Db::getInstance()->queryOneObject($sql, ['id' => $id], static::class);
     }
 
-    public function get()
+    public static function get()
     {
-        $tableName = $this->getTableName();
+        $tableName = static::getTableName();
         $sql = "SELECT * FROM {$tableName}";
-        return $this->db->queryAll($sql);
+        return Db::getInstance()->queryAll($sql);
     }
 
     public function insert()
     {
-        //TODO реализовать INSERT
-        //$sql = "INSERT INTO posts (title, text) VALUES ('$title', '$text')"
-        foreach ($this as $key => $value) {
-            echo $key . ' => ' . $value . "\n";
+        $params = [];
+        $columns = [];
+
+        foreach ($this->props as $key => $value) {
+            $params[':' . $key] = $this->$key;
+            $columns[] = $key;
         }
+
+        $columns = implode(', ', $columns);
+        $values = implode(', ', array_keys($params));
+        $tableName = static::getTableName();
+
+        $sql = "INSERT INTO {$tableName} ($columns) VALUES ($values);";
+
+        Db::getInstance()->execute($sql, $params);
+
+        $this->id = Db::getInstance()->lastInsertId();
+        return $this;
     }
 
-    abstract public function getTableName();
+    // TODO: Update method
+
+    abstract public static function getTableName();
 }

@@ -4,6 +4,7 @@ namespace Ember\App\Interfaces;
 
 interface IModel
 {
-    public function find(int $id);
-    public function get();
+    public static function find(int $id);
+    public static function get();
+    public function insert();
 }

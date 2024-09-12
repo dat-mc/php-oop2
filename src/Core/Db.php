@@ -52,18 +52,25 @@ class Db
 
     public function execute($sql, $params = [])
     {
-        //тут будут выполняться insert delete
+        return $this->query($sql, $params)->rowCount();
     }
 
     public function lastInsertId()
     {
-        //вернуть id
+        return $this->getConnection()->lastInsertId();
     }
 
     //select where id=1
     public function queryOne($sql, $params)
     {
         return $this->query($sql, $params)->fetch();
+    }
+
+    public function queryOneObject($sql, $params, $class)
+    {
+        $pdo = $this->query($sql, $params);
+        $pdo->setFetchMode(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, $class);
+        return $pdo->fetch();
     }
 
     //select * from posts;
